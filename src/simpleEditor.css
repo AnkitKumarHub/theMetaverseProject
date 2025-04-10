@@ -1,0 +1,90 @@
+/* This is a separate CSS file for the simple editor */
+.simple-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.simple-editor-toolbar button,
+.simple-editor-toolbar select {
+  margin-right: 5px;
+  cursor: pointer;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.simple-editor-toolbar button:hover,
+.simple-editor-toolbar select:hover {
+  background-color: #f3f4f6;
+}
+
+[contenteditable] {
+  outline: none;
+  min-height: 200px;
+  padding: 16px;
+  background-color: white;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+[contenteditable]:focus {
+  border-color: #3b82f6;
+}
+
+[contenteditable] h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+[contenteditable] h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+[contenteditable] h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+[contenteditable] ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+}
+
+[contenteditable] ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+}
+
+[contenteditable] a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+[contenteditable] img {
+  max-width: 100%;
+  height: auto;
+}
+
+[contenteditable] blockquote {
+  border-left: 2px solid #e5e7eb;
+  padding-left: 10px;
+  margin-left: 0;
+  color: #6b7280;
+}
+
+[contenteditable] pre {
+  background-color: #f3f4f6;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+} 

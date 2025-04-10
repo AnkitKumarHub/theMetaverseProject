@@ -1,0 +1,518 @@
+/* Additional Quill Editor styling */
+.quill {
+  border-radius: 0.375rem;
+}
+
+.ql-toolbar {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background-color: #f9fafb;
+  border-color: #e5e7eb !important;
+}
+
+.ql-container {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border-color: #e5e7eb !important;
+  min-height: 200px;
+}
+
+.ql-editor {
+  min-height: 200px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+}
+
+.ql-editor h1 {
+  font-size: 2em;
+}
+
+.ql-editor h2 {
+  font-size: 1.5em;
+}
+
+.ql-editor h3 {
+  font-size: 1.17em;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ql-snow .ql-tooltip {
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #e5e7eb;
+}
+
+/* Custom styling for the Quill editor */
+
+/* Container styles to match form inputs */
+.quill-editor-container {
+  margin-bottom: 0; /* Remove default margin */
+}
+
+/* Editor wrapper styles */
+.editor-styles {
+  /* Match the styling of other form inputs */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-radius: 0.375rem;
+  overflow: hidden; /* Ensure border radius is applied to children */
+}
+
+/* Toolbar styles */
+.ql-toolbar.ql-snow {
+  border: 1px solid #e5e7eb !important;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background-color: #f9fafb;
+  padding: 0.5rem;
+}
+
+/* Editor container styles */
+.ql-container.ql-snow {
+  border: 1px solid #e5e7eb !important;
+  border-top: none !important;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  min-height: 200px;
+}
+
+/* Editor area styles */
+.ql-editor {
+  min-height: 200px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+  color: #111827;
+}
+
+/* Ensure consistent font sizes for headings */
+.ql-editor h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.ql-editor h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.ql-editor h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Ensure images are properly contained */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+/* Style for the tooltips */
+.ql-tooltip {
+  z-index: 60 !important; /* Ensure tooltips appear above other content */
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Ensure proper styling for links */
+.ql-editor a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Ensure code blocks stand out */
+.ql-editor pre.ql-syntax {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* Fix for z-index issues to ensure editor is always visible */
+.quill-editor-container .quill {
+  position: relative;
+  z-index: 20; /* Higher than the default but lower than the modal */
+}
+
+/* Fix spacing issues with the toolbar */
+.ql-formats {
+  margin-right: 10px !important;
+}
+
+/* Active button states */
+.ql-formats button.ql-active,
+.ql-formats .ql-picker-label.ql-active {
+  color: #2563eb !important;
+}
+
+.ql-formats button:hover,
+.ql-formats .ql-picker-label:hover {
+  color: #1d4ed8 !important;
+}
+
+/* Ensure toolbar buttons are properly aligned */
+.ql-formats button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Force editor visibility */
+.editor-wrapper {
+  position: relative;
+  z-index: 5;
+  display: block !important; /* Force display regardless of other factors */
+  margin-bottom: 1.5rem;
+  min-height: 300px;
+}
+
+/* Make sure Quill container is always displayed */
+.editor-wrapper .quill {
+  display: block !important;
+  height: 300px !important;
+}
+
+/* Ensure the Quill container is always visible and properly sized */
+.ql-container.ql-snow {
+  position: relative;
+  z-index: 5;
+  display: block !important;
+  min-height: 200px !important;
+}
+
+/* Fix for editor content */
+.ql-editor {
+  min-height: 200px !important;
+  position: relative;
+  z-index: 5;
+  background-color: white; /* Ensure background is solid */
+}
+
+/* Fix for toolbar */
+.ql-toolbar.ql-snow {
+  position: relative;
+  z-index: 6; /* Above the editor */
+  display: block !important;
+}
+
+/* Improved Quill editor styling to prevent disappearance */
+
+/* Container for the entire Quill editor */
+.quill-container {
+  display: block !important;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+/* Wrapper to maintain editor dimensions and prevent collapse */
+.quill-editor-wrapper {
+  position: relative;
+  display: block !important;
+  height: 350px !important; /* Force a fixed height */
+}
+
+/* Styling for the main Quill component */
+.quill-editor-wrapper .quill {
+  display: block !important;
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 10;
+}
+
+/* Ensure the Quill toolbar is always visible */
+.ql-toolbar.ql-snow {
+  display: flex !important;
+  flex-wrap: wrap;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb !important;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  z-index: 20;
+  position: relative;
+  padding: 8px !important;
+}
+
+/* Ensure the editor container is visible */
+.ql-container.ql-snow {
+  display: block !important;
+  position: absolute;
+  top: 42px; /* Adjust based on toolbar height */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid #e5e7eb !important;
+  border-top: none !important;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  height: calc(100% - 42px) !important; /* Subtract toolbar height */
+  z-index: 10;
+}
+
+/* Ensure the editing area is always displayed */
+.ql-editor {
+  display: block !important;
+  min-height: 200px !important;
+  height: 100% !important;
+  padding: 1rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  overflow-y: auto !important;
+  background-color: white !important;
+}
+
+/* Fix toolbar button styling */
+.ql-formats {
+  display: inline-flex !important;
+  align-items: center;
+  margin-right: 15px !important;
+}
+
+.ql-formats button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 24px !important;
+  width: 28px !important;
+}
+
+/* Fix alignment and spacing of toolbar buttons */
+.ql-picker {
+  display: inline-block !important;
+}
+
+/* Force toolbar sections to stay together */
+.ql-toolbar .ql-formats {
+  margin-bottom: 5px !important;
+}
+
+/* Fix dropdown menus */
+.ql-picker-options {
+  z-index: 30 !important; /* Ensure dropdowns appear above everything */
+}
+
+/* Image styling in editor */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Force the editor to be visible at all times */
+.editor-main {
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* Ensure toolbar items remain visible */
+.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+  display: block !important;
+  z-index: 100 !important;
+}
+
+/* Animate toolbar transition */
+.ql-toolbar {
+  transition: opacity 0.2s ease;
+}
+
+/* Fixed height approach to ensure Quill editor always displays */
+.fixed-height-editor {
+  position: relative;
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+/* The Quill container */
+.fixed-height-editor .quill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+}
+
+/* Ensure the toolbar stays visible */
+.ql-toolbar.ql-snow {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb !important;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  padding: 8px !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 31;
+}
+
+/* Position the editor area below the toolbar */
+.ql-container.ql-snow {
+  position: absolute;
+  top: 42px; /* Height of toolbar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid #e5e7eb !important;
+  border-top: none !important;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  height: calc(100% - 42px) !important;
+}
+
+/* Style the editor area */
+.ql-editor {
+  background-color: white;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #111827;
+  height: 100% !important;
+  padding: 1rem !important;
+}
+
+/* Dropdown menus need higher z-index */
+.ql-snow .ql-picker.ql-expanded .ql-picker-options {
+  z-index: 40 !important;
+}
+
+/* Fix size of toolbar buttons */
+.ql-snow .ql-formats {
+  margin-right: 15px !important;
+}
+
+/* Style headings */
+.ql-editor h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.ql-editor h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.ql-editor h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Style links */
+.ql-editor a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Style images */
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+/* Style code blocks */
+.ql-editor pre.ql-syntax {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* New standalone editor styling, mimicking the reference image */
+.standalone-editor {
+  margin-bottom: 20px;
+}
+
+.standalone-editor .quill {
+  display: block;
+  position: static; /* Not absolute - fixes layout issues */
+}
+
+/* Fixed toolbar styling matching reference */
+.standalone-editor .ql-toolbar.ql-snow {
+  border: 1px solid #e5e7eb;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background-color: #f9fafb;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  position: relative; /* Not absolute */
+  z-index: 5;
+}
+
+/* Editor container */
+.standalone-editor .ql-container.ql-snow {
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  position: relative; /* Not absolute */
+  height: 200px !important; /* Fixed height */
+  z-index: 4;
+}
+
+/* Editor itself */
+.standalone-editor .ql-editor {
+  height: 100%;
+  min-height: 200px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 12px 15px;
+  background-color: white;
+}
+
+/* Force toolbar display with important flag */
+.standalone-editor .ql-formats {
+  display: inline-flex !important;
+  margin-right: 15px !important;
+}
+
+/* Remove any padding reset */
+.editor-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block !important;
+  position: static !important; /* Do not use absolute */
+  background: transparent !important;
+}
+
+/* Force button display */
+.standalone-editor .ql-toolbar button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Make sure the "Normal" dropdown is visible */
+.standalone-editor .ql-toolbar .ql-picker {
+  display: inline-block !important;
+}
+
+/* Ensure dropdown menus work */
+.standalone-editor .ql-snow .ql-picker.ql-expanded .ql-picker-options {
+  display: block !important;
+  z-index: 10 !important;
+}
+
+/* Add these to fix cursor display issues */
+.standalone-editor .ql-editor {
+  caret-color: black !important; /* Makes cursor clearly visible */
+}
+
+.standalone-editor .ql-editor:focus {
+  outline: none;
+  border-color: #4f46e5 !important;
+}
+
+/* Ensure editor doesn't lose height on focus */
+.standalone-editor .ql-container.ql-snow {
+  min-height: 200px !important;
+} 

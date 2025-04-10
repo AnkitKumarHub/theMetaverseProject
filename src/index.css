@@ -1,0 +1,292 @@
+/* Modern font imports */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #2563eb;
+  --secondary-color: #1e40af;
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card {
+  @apply rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+}
+
+/* Neomorphic effects */
+.neo-button {
+  @apply transition-all duration-300;
+  box-shadow: 6px 6px 12px #e2e8f0,
+             -6px -6px 12px #ffffff;
+}
+
+.neo-button:hover {
+  box-shadow: 4px 4px 8px #e2e8f0,
+             -4px -4px 8px #ffffff;
+}
+
+/* Modern animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { filter: brightness(100%); }
+  50% { filter: brightness(120%); }
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Smooth scroll progress bar */
+.scroll-progress {
+  @apply fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500;
+  transform-origin: 0%;
+}
+
+/* Modern typography */
+.heading-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600;
+}
+
+.title-font {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Futuristic share buttons */
+.share-button {
+  @apply relative overflow-hidden rounded-full p-3 transition-all duration-300;
+}
+
+.share-button::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 transition-opacity duration-300;
+}
+
+.share-button:hover::before {
+  @apply opacity-10;
+}
+
+/* Enhanced image styles */
+.article-image {
+  @apply relative rounded-2xl overflow-hidden;
+}
+
+.article-image::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-b from-transparent to-black/30;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Article content typography */
+.article-content {
+  @apply prose prose-base md:prose-lg lg:prose-xl max-w-none;
+  @apply prose-headings:font-title prose-headings:text-gray-900;
+  @apply prose-p:text-gray-700 prose-p:leading-relaxed;
+  @apply prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline;
+  @apply prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50/50;
+  @apply prose-img:rounded-xl prose-img:shadow-lg;
+  @apply prose-strong:text-gray-900;
+  @apply prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:rounded;
+  @apply prose-pre:bg-gray-900 prose-pre:text-gray-100;
+}
+
+/* Loading animation */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.loading-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+  background-size: 1000px 100%;
+}
+
+/* Custom styles for the crypto ticker */
+#coinmarketcap-widget-marquee-top,
+#coinmarketcap-widget-marquee-bottom {
+  width: 100% !important;
+  height: 40px !important;
+  display: block !important;
+  overflow: hidden !important;
+}
+
+/* Custom styles for CoinMarketCap widget */
+#coinmarketcap-widget-marquee {
+  height: 40px !important;
+}
+
+/* Custom styles for marquee */
+marquee {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Continuous scrolling animation */
+@keyframes continuous-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: continuous-marquee 30s linear infinite;
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* Hover pause effect */
+.hover-pause-container:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* Text shadow utilities */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Enhanced image styles for article content */
+.prose img {
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 2rem auto;
+}
+
+/* Article content blockquote styling */
+.prose blockquote {
+  font-style: italic;
+  border-left: 4px solid #3b82f6;
+  background-color: #eff6ff;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.prose blockquote p:first-of-type::before,
+.prose blockquote p:last-of-type::after {
+  content: "";
+}
+
+/* Responsive article heading sizes */
+@media (max-width: 640px) {
+  .prose h1 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  .prose h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  .prose h3 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+}
+
+/* Print styles for article */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .prose {
+    font-size: 12pt;
+  }
+  
+  .prose img {
+    max-height: 300px;
+    margin: 1rem 0;
+  }
+  
+  body {
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* Image caption styling */
+.prose figure figcaption {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* Code block styling */
+.prose pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose code {
+  background-color: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+} 
