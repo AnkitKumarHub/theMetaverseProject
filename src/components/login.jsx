@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { auth, googleProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from '../../firebase';
+import { auth, db, googleProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from '../../firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import './login.css';
 
@@ -17,6 +18,26 @@ const Login = ({ initialMode = "login" }) => {
     setIsLogin(initialMode === "login");
   }, [initialMode]);
 
+  const createUserDocument = async (user) => {
+    if (!user) return;
+    
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      
+      // Create initial user data
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        isProfileComplete: false,
+        createdAt: serverTimestamp()
+      }, { merge: true });
+      
+      console.log('User document created successfully');
+    } catch (error) {
+      console.error('Error creating user document:', error);
+    }
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -26,7 +47,12 @@ const Login = ({ initialMode = "login" }) => {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        // Sign up and get user credential
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Create the user document in Firestore
+        await createUserDocument(user);
       }
       navigate('/dashboard');
     } catch (error) {
@@ -42,7 +68,12 @@ const Login = ({ initialMode = "login" }) => {
     setError('');
     
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Create/update user document for Google sign-in users too
+      await createUserDocument(user);
+      
       navigate('/dashboard');
     } catch (error) {
       console.error(error);

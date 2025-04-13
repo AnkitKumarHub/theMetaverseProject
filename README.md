@@ -91,3 +91,70 @@ Edit your published articles with a feature-rich editor:
 ## License
 
 MIT 
+
+## External Image Storage Solution
+
+This project uses Cloudinary as an alternative to Firebase Storage for hosting user profile photos and images. This approach provides several benefits:
+
+- Free tier with generous limits
+- No CORS issues during development
+- CDN-delivered images with automatic optimization
+
+## Setup Instructions
+
+### 1. Create a Cloudinary Account
+
+1. Sign up for a free account at [Cloudinary](https://cloudinary.com/)
+2. After signing up, you'll get your cloud name, API key, and API secret
+
+### 2. Create an Upload Preset
+
+1. In your Cloudinary dashboard, go to Settings > Upload
+2. Scroll down to "Upload presets" and click "Add upload preset"
+3. For development, you can set it to "unsigned" (less secure but easier for development)
+4. Set any restrictions you want (file types, max size, etc.)
+5. Save the preset name
+
+### 3. Configure Environment Variables
+
+1. Copy `.env.example` to `.env`:
+   ```
+   cp .env.example .env
+   ```
+
+2. Fill in your Cloudinary credentials:
+   ```
+   VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name_here
+   VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset_here  
+   VITE_CLOUDINARY_API_KEY=your_api_key_here
+   ```
+
+### 4. Testing Image Uploads
+
+1. Start the development server
+2. Go to the profile page and try uploading an image
+3. You should see the image upload progress, and then the displayed profile photo
+
+## Security Considerations
+
+For production environments, you should use signed uploads to Cloudinary:
+
+1. Create a server-side API endpoint that generates a signature using your API secret
+2. Modify the cloudinaryUpload.js utility to use the signed upload approach
+3. Never expose your Cloudinary secret key in the frontend code
+
+## Troubleshooting
+
+If image uploads fail:
+
+1. Check browser console for any error messages
+2. Verify your Cloudinary credentials in .env file
+3. Make sure your upload preset is configured correctly
+4. Check if the image file size is under the limits (default 5MB in our code)
+
+## Fallback Mechanism
+
+The app has a built-in fallback mechanism if Cloudinary uploads fail:
+
+1. If an upload fails, the app will generate a placeholder image with the user's initials
+2. This ensures users can still complete their profiles even if image uploads have issues 
