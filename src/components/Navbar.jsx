@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { auth } from '../../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import toast, { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 // Import the logo
 import logoImage from '../assets/heading-3bstHt0N.webp';
 
@@ -52,14 +54,96 @@ const Navbar = () => {
     }
   };
 
-  // Handle sign out
+  // Handle sign out with animation
   const handleSignOut = async () => {
     try {
+      const loadingToast = toast.loading('Signing out...', {
+        style: {
+          background: '#F3F4F6',
+          color: '#1F2937',
+          padding: '12px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        },
+      });
+
       await signOut(auth);
       setIsAuthOpen(false);
-      navigate('/');
+      
+      toast.dismiss(loadingToast);
+      
+      toast.custom((t) => (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex items-center justify-between p-4 gap-3`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 bg-green-100 rounded-full p-2">
+              <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-900">
+              Successfully signed out
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="flex-shrink-0 rounded-full p-1 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </motion.div>
+      ), {
+        duration: 2500,
+      });
+
+      // Animate navigation with a slight delay
+      setTimeout(() => {
+        navigate('/');
+      }, 300);
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.custom((t) => (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex items-center justify-between p-4 gap-3`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 bg-red-100 rounded-full p-2">
+              <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-900">
+              Unable to sign out. Please try again.
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="flex-shrink-0 rounded-full p-1 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </motion.div>
+      ), {
+        duration: 2500,
+      });
     }
   };
 
@@ -67,6 +151,14 @@ const Navbar = () => {
     <>
       {/* Sticky header with logo, search and login */}
       <div className="fixed top-8 left-0 right-0 z-40 bg-white shadow-md">
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            custom: {
+              duration: 2500,
+            },
+          }}
+        />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Search - Left */}
@@ -296,6 +388,94 @@ export const NavLinks = ({ mobile = false, closeMenu = () => {} }) => {
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Suggestion: Create a separate AuthButton component for better organization
+const AuthButton = ({ user, onSignOut }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (buttonRef.current && !buttonRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={buttonRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="group p-2 focus:outline-none transition-all duration-300"
+      >
+        {user ? (
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+            {user.email.charAt(0).toUpperCase()}
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50"
+          >
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    onSignOut();
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Create Account
+                </Link>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

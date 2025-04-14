@@ -303,6 +303,7 @@ const Dashboard = () => {
                 <p className="text-gray-500 mb-8 text-sm font-light">View and manage your articles and submissions</p>
                 <Link 
                   to="/your-content" 
+                  state={{ activeTab: 'published' }}
                   className="inline-flex items-center text-blue-600 font-medium text-sm hover:text-blue-800 transition-colors group"
                 >
                   View Content

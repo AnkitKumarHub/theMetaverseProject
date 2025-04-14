@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { motion } from 'framer-motion';
 
@@ -78,6 +78,7 @@ const NewsGrid = () => {
       try {
         const articlesQuery = query(
           collection(db, "articles"),
+          where("status", "==", "published"),
           orderBy("createdAt", "desc"),
           limit(10)
         );

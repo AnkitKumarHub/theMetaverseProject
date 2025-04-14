@@ -12,6 +12,7 @@ const ArticleView = () => {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authorData, setAuthorData] = useState(null);
   const navigate = useNavigate();
   const [isOwner, setIsOwner] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
@@ -40,10 +41,24 @@ const ArticleView = () => {
         const articleId = snapshot.docs[0].id;
         setArticle({ id: articleId, ...articleData });
         
-        // Check if current user is the author
+        // Check if current user is the author based on userId
         const user = auth.currentUser;
-        if (user && articleData.author && articleData.author.email === user.email) {
+        if (user && articleData.userId === user.uid) {
           setIsOwner(true);
+        }
+
+        // Fetch author details from users collection
+        if (articleData.userId) {
+          const userDocRef = doc(db, 'users', articleData.userId);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setAuthorData({
+              name: `${userData.firstname} ${userData.lastname || ''}`.trim(),
+              bio: userData.bio || 'Contributing writer at Metaverse Street Journal',
+              email: userData.email
+            });
+          }
         }
         
         setLoading(false);
@@ -366,11 +381,11 @@ const ArticleView = () => {
                       whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     >
-                      {article?.author?.name?.charAt(0) || "A"}
+                      {authorData?.name?.charAt(0) || "A"}
                     </motion.div>
                   </div>
                   <div>
-                    <p className="font-medium text-sm text-gray-700">{article?.author?.name || "Anonymous"}</p>
+                    <p className="font-medium text-sm text-gray-700">{authorData?.name || "Anonymous"}</p>
                   </div>
                 </div>
                 
@@ -580,7 +595,7 @@ const ArticleView = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.5 }}
                     >
-                      {article?.author?.name || "Anonymous"}
+                      {authorData?.name || "Anonymous"}
                     </motion.h3>
                   </div>
                   
@@ -593,15 +608,9 @@ const ArticleView = () => {
                   >
                     <div className="absolute top-0 left-0 w-16 h-px bg-gradient-to-r from-blue-200/50 to-transparent"></div>
                     
-                    {article?.author?.bio ? (
-                      <p className="text-sm text-gray-600 mt-3 ml-0">
-                        {article.author.bio}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-3 ml-0">
-                        <span className="italic">Contributing writer at Metaverse Street Journal</span>
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-600 mt-3 ml-0">
+                      {authorData?.bio || "Contributing writer at Metaverse Street Journal"}
+                    </p>
                   </motion.div>
                 </div>
               </div>

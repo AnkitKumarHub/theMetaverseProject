@@ -3,6 +3,8 @@ import { auth, db, googleProvider, createUserWithEmailAndPassword, signInWithEma
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import './login.css';
+import toast, { Toaster } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 const Login = ({ initialMode = "login" }) => {
   const [email, setEmail] = useState('');
@@ -18,13 +20,53 @@ const Login = ({ initialMode = "login" }) => {
     setIsLogin(initialMode === "login");
   }, [initialMode]);
 
+  const showCustomToast = (message, type = 'success') => {
+    toast.custom((t) => (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.3 }}
+        className={`${
+          t.visible ? 'animate-enter' : 'animate-leave'
+        } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex items-center justify-between p-4 gap-3`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`flex-shrink-0 ${type === 'success' ? 'bg-green-100' : 'bg-red-100'} rounded-full p-2`}>
+            {type === 'success' ? (
+              <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+          </div>
+          <p className="text-sm font-medium text-gray-900">
+            {message}
+          </p>
+        </div>
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="flex-shrink-0 rounded-full p-1 hover:bg-gray-100 transition-colors"
+        >
+          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </motion.div>
+    ), {
+      duration: 2500,
+    });
+  };
+
   const createUserDocument = async (user) => {
     if (!user) return;
     
     try {
       const userRef = doc(db, 'users', user.uid);
       
-      // Create initial user data
       await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
@@ -32,9 +74,9 @@ const Login = ({ initialMode = "login" }) => {
         createdAt: serverTimestamp()
       }, { merge: true });
       
-      console.log('User document created successfully');
+      showCustomToast('Account created successfully!');
     } catch (error) {
-      console.error('Error creating user document:', error);
+      showCustomToast('Failed to create user profile', 'error');
     }
   };
 
@@ -43,21 +85,34 @@ const Login = ({ initialMode = "login" }) => {
     setIsLoading(true);
     setError('');
     
+    const loadingToast = toast.loading('Please wait...', {
+      style: {
+        background: '#F3F4F6',
+        color: '#1F2937',
+        padding: '12px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      },
+    });
+    
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
+        toast.dismiss(loadingToast);
+        showCustomToast('Welcome back!');
       } else {
-        // Sign up and get user credential
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
-        // Create the user document in Firestore
+        toast.dismiss(loadingToast);
         await createUserDocument(user);
       }
       navigate('/dashboard');
     } catch (error) {
-      console.error(error);
-      setError(error.message.replace('Firebase: ', ''));
+      toast.dismiss(loadingToast);
+      const errorMessage = error.message.replace('Firebase: ', '').replace('Error (auth/', '').replace(')', '');
+      setError(errorMessage);
+      showCustomToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -67,17 +122,30 @@ const Login = ({ initialMode = "login" }) => {
     setIsLoading(true);
     setError('');
     
+    const loadingToast = toast.loading('Signing in with Google...', {
+      style: {
+        background: '#F3F4F6',
+        color: '#1F2937',
+        padding: '12px',
+        borderRadius: '8px',
+        fontSize: '14px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      },
+    });
+    
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
-      // Create/update user document for Google sign-in users too
       await createUserDocument(user);
-      
+      toast.dismiss(loadingToast);
+      showCustomToast('Successfully signed in with Google!');
       navigate('/dashboard');
     } catch (error) {
-      console.error(error);
-      setError(error.message.replace('Firebase: ', ''));
+      toast.dismiss(loadingToast);
+      const errorMessage = error.message.replace('Firebase: ', '').replace('Error (auth/', '').replace(')', '');
+      setError(errorMessage);
+      showCustomToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +157,15 @@ const Login = ({ initialMode = "login" }) => {
 
   return (
     <div className="auth-wrapper">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          custom: {
+            duration: 2500,
+          },
+        }}
+      />
+      
       <Link to="/" className="back-link">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>

@@ -87,7 +87,8 @@ const ProfileModal = ({ isOpen, onClose, userId, onProfileUpdate }) => {
         setProfile({
           ...profile,
           ...userData,
-          email: auth.currentUser?.email || ''
+          email: auth.currentUser?.email || '',
+          profileBio: userData.bio || ''
         });
       } else {
         // If no profile exists yet, just set the email and create a new user document
