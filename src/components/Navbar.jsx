@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Import the logo
 import logoImage from '../assets/heading-3bstHt0N.webp';
 
-const Navbar = () => {
+const Navbar = ({ position = "below-ticker" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -68,6 +68,9 @@ const Navbar = () => {
         },
       });
 
+      // Clear the session timestamp before signing out
+      localStorage.removeItem('auth_last_active_timestamp');
+      
       await signOut(auth);
       setIsAuthOpen(false);
       
@@ -150,7 +153,7 @@ const Navbar = () => {
   return (
     <>
       {/* Sticky header with logo, search and login */}
-      <div className="fixed top-8 left-0 right-0 z-40 bg-white shadow-md">
+      <div className={`fixed ${position === "below-ticker" ? "top-8" : "top-0"} left-0 right-0 z-40 bg-white shadow-md`}>
         <Toaster 
           position="top-right"
           toastOptions={{

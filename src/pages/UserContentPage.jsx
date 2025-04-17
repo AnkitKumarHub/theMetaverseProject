@@ -15,17 +15,33 @@ const UserContentPage = () => {
   );
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
+  const [fromEdit, setFromEdit] = useState(false);
   
   // Set active tab from location state when navigation occurs
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
     }
-  }, [location.state]);
+    
+    // Check if we're coming from the edit page to prevent duplicate toasts
+    if (location.state?.fromEdit) {
+      setFromEdit(true);
+      
+      // Clear the state to prevent issues on refresh
+      const newState = { ...location.state };
+      delete newState.fromEdit;
+      
+      // Replace the current history entry with the new state
+      navigate(location.pathname, { 
+        replace: true,
+        state: Object.keys(newState).length > 0 ? newState : undefined
+      });
+    }
+  }, [location.state, navigate, location.pathname]);
   
   return (
     <div className="min-h-screen bg-slate-50 font-['Inter',sans-serif]">
-      <Navbar />
+      <Navbar position="top" />
       
       {/* Toast notification container */}
       <Toaster 
@@ -49,7 +65,7 @@ const UserContentPage = () => {
       />
       
       {/* Main content with clean, minimalist design */}
-      <div className="pt-40 pb-20">
+      <div className="pt-28 pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb with subtle styling - Fixed positioning to avoid confusion with navbar */}
           <nav className="flex mb-10" aria-label="Breadcrumb">
@@ -170,8 +186,8 @@ const UserContentPage = () => {
               className="bg-transparent rounded-xl"
             >
               {/* Pass sortBy value to UserArticles component */}
-              {activeTab === 'published' && <UserArticles status="published" sortBy={sortBy} />}
-              {activeTab === 'drafts' && <UserArticles status="draft" sortBy={sortBy} />}
+              {activeTab === 'published' && <UserArticles status="published" sortBy={sortBy} fromEdit={fromEdit} />}
+              {activeTab === 'drafts' && <UserArticles status="draft" sortBy={sortBy} fromEdit={fromEdit} />}
             </motion.div>
           </AnimatePresence>
         </div>

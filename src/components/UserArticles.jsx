@@ -4,7 +4,7 @@ import { db, auth } from '../../firebase';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-const UserArticles = ({ status = 'published', sortBy = 'newest' }) => {
+const UserArticles = ({ status = 'published', sortBy = 'newest', fromEdit = false }) => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

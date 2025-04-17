@@ -158,13 +158,13 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar user={user} />
+      <Navbar position="top" user={user} />
       <Toaster position="top-right" />
       
       {/* Main content */}
       <div className="min-h-screen bg-gray-50 font-['Inter',sans-serif]">
-        {/* Add more padding to the top for better spacing */}
-        <div className="pt-32 pb-24 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Reduce padding to account for navbar at top */}
+        <div className="pt-24 pb-24 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="relative">
             {/* Subtle background text */}
             <h2 className="absolute -top-20 left-0 text-[180px] font-bold text-gray-50 select-none leading-none z-0 opacity-40">

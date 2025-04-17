@@ -179,29 +179,25 @@ const EditArticle = () => {
   const [imageFile, setImageFile] = useState(null);
   const fileInputRef = useRef(null);
   const quillRef = useRef(null);
-  const editorRef = useRef(null);
-  const [editorKey, setEditorKey] = useState(Date.now());
-  const [editorContent, setEditorContent] = useState('');
-  const [editorMounted, setEditorMounted] = useState(false);
-  // New state variables
+  const [formDirty, setFormDirty] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [articleStatus, setArticleStatus] = useState('published');
   const [deleting, setDeleting] = useState(false);
   
-  // React Hook Form setup
-  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors, isDirty } } = useForm({
     defaultValues: {
       title: '',
       slug: '',
       metaTitle: '',
       subtitle: '',
       metaDescription: '',
-      metaTags: '', // New field for meta tags
+      metaTags: '',
       content: '',
       imageUrl: '',
       date: '',
       author: '',
+      tags: [],
       faqs: [{ question: '', answer: '' }]
     }
   });
@@ -211,38 +207,32 @@ const EditArticle = () => {
     name: "faqs"
   });
 
-  // Watch fields for reactive updates
   const title = watch('title');
   const imageUrl = watch('imageUrl');
+  const tags = watch('tags') || [];
   
-  // Watch title for automatic slug generation
+  useEffect(() => {
+    if (isDirty) {
+      setFormDirty(true);
+    }
+  }, [isDirty]);
+
   useEffect(() => {
     if (title) {
       const newSlug = title.toLowerCase()
-        .replace(/[^\w\s-]/g, '') // Remove special characters
-        .replace(/\s+/g, '-')     // Replace spaces with dashes
-        .replace(/-+/g, '-')      // Remove consecutive dashes
-        .trim();                  // Trim any leading/trailing spaces or dashes
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
       setValue('slug', newSlug);
     }
   }, [title, setValue]);
 
-  // Fix for editor visibility
   useEffect(() => {
-    // Reset editor when content changes
     if (article?.content) {
-      setEditorKey(Date.now());
       setValue('content', article.content);
     }
   }, [article, setValue]);
-
-  // Add this new effect for editor stability
-  useEffect(() => {
-    if (article?.content && !editorMounted) {
-      setEditorContent(article.content);
-      setEditorMounted(true);
-    }
-  }, [article, editorMounted]);
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -264,7 +254,6 @@ const EditArticle = () => {
 
         const articleData = docSnap.data();
         
-        // Check if the current user is the author using userId
         if (articleData.userId !== user.uid) {
           setError("You don't have permission to edit this article");
           setLoading(false);
@@ -273,16 +262,14 @@ const EditArticle = () => {
 
         setArticle(articleData);
         
-        // Set article status from data
         setArticleStatus(articleData.status || 'published');
         
-        // Set form values from article data
         setValue('title', articleData.title || '');
         setValue('slug', articleData.slug || '');
         setValue('metaTitle', articleData.metaTitle || '');
         setValue('subtitle', articleData.subtitle || '');
         setValue('metaDescription', articleData.metaDescription || '');
-        setValue('metaTags', articleData.metaTags || ''); // Add metaTags field
+        setValue('metaTags', articleData.metaTags || '');
         setValue('content', articleData.content || articleData.description || '');
         setValue('imageUrl', articleData.imageUrl || '');
         setValue('date', articleData.createdAt ? new Date(articleData.createdAt.toDate()).toLocaleDateString('en-US', {
@@ -292,7 +279,10 @@ const EditArticle = () => {
           day: 'numeric'
         }) : '');
         
-        // Fetch author details from users collection
+        if (articleData.tags && Array.isArray(articleData.tags)) {
+          setValue('tags', articleData.tags);
+        }
+        
         if (articleData.userId) {
           const userDocRef = doc(db, 'users', articleData.userId);
           const userDoc = await getDoc(userDocRef);
@@ -302,13 +292,13 @@ const EditArticle = () => {
           }
         }
         
-        // Handle FAQs if they exist
         if (articleData.faqs && articleData.faqs.length > 0) {
           setValue('faqs', articleData.faqs);
         }
         
         setPreviewImage(articleData.imageUrl || '');
         setLoading(false);
+        setFormDirty(false);
       } catch (err) {
         console.error("Error fetching article:", err);
         setError("Failed to load the article. Please try again later.");
@@ -319,7 +309,6 @@ const EditArticle = () => {
     fetchArticle();
   }, [id, navigate, setValue]);
 
-  // Function to add a new tag
   const handleTagAdd = (newTag) => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setValue('tags', [...tags, newTag.trim()]);
@@ -328,27 +317,24 @@ const EditArticle = () => {
     return false;
   };
 
-  // Function to remove a tag
   const handleTagRemove = (tagToRemove) => {
     setValue('tags', tags.filter(tag => tag !== tagToRemove));
   };
 
-  // Function to handle image file selection
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
       
-      // Create a preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
+        setValue('imageUrl', reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Trigger the hidden file input
   const triggerFileInput = () => {
     fileInputRef.current.click();
   };
@@ -384,7 +370,6 @@ const EditArticle = () => {
     });
   };
 
-  // Image handler for Quill editor
   const imageHandler = () => {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
@@ -395,11 +380,15 @@ const EditArticle = () => {
       const file = input.files[0];
       if (file) {
         try {
-          // Insert a placeholder
-          const range = quillRef.current.getEditor().getSelection();
-          quillRef.current.getEditor().insertText(range.index, 'Uploading image...', 'bold', true);
+          const editor = quillRef.current?.getEditor();
+          if (!editor) {
+            console.error("Editor not available");
+            return;
+          }
           
-          // Upload to Firebase Storage
+          const range = editor.getSelection();
+          editor.insertText(range.index, 'Uploading image...', 'bold', true);
+          
           const storage = getStorage();
           const storageRef = ref(storage, `article_content_images/${Date.now()}_${file.name}`);
           const uploadTask = uploadBytesResumable(storageRef, file);
@@ -411,39 +400,34 @@ const EditArticle = () => {
             },
             (error) => {
               console.error("Upload failed:", error);
-              quillRef.current.getEditor().deleteText(range.index, 'Uploading image...'.length);
-              alert('Failed to upload image. Please try again.');
+              editor.deleteText(range.index, 'Uploading image...'.length);
+              toast.error('Failed to upload image. Please try again.');
             },
             async () => {
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
               
-              // Remove placeholder and insert image
-              quillRef.current.getEditor().deleteText(range.index, 'Uploading image...'.length);
-              quillRef.current.getEditor().insertEmbed(range.index, 'image', downloadURL);
+              editor.deleteText(range.index, 'Uploading image...'.length);
+              editor.insertEmbed(range.index, 'image', downloadURL);
             }
           );
         } catch (error) {
           console.error('Error uploading image:', error);
-          alert('Failed to upload image. Please try again.');
+          toast.error('Failed to upload image. Please try again.');
         }
       }
     };
   };
 
-  // Function to handle article deletion
   const deleteArticle = async () => {
     try {
       setDeleting(true);
       
-      // Delete the article document from Firestore
       const articleRef = doc(db, "articles", id);
       await deleteDoc(articleRef);
       
-      // Show success toast
       toast.success('Article deleted successfully');
       
-      // Navigate back to user content page
-      navigate('/your-content', { state: { activeTab: 'published' } });
+      navigate('/your-content', { state: { activeTab: 'published', fromEdit: true } });
     } catch (err) {
       console.error("Error deleting article:", err);
       toast.error("Failed to delete article. Please try again.");
@@ -451,12 +435,10 @@ const EditArticle = () => {
     }
   };
 
-  // Toggle preview mode
   const togglePreview = () => {
     setShowPreview(!showPreview);
   };
 
-  // Form submission handler
   const onSubmit = async (data) => {
     try {
       if (!data.title.trim()) {
@@ -469,15 +451,20 @@ const EditArticle = () => {
         return;
       }
       
-      setSaving(true);
-      
-      // Upload image if there's a new one
-      let finalImageUrl = data.imageUrl;
-      if (imageFile) {
-        finalImageUrl = await uploadImage();
+      if (!data.imageUrl && !imageFile && !previewImage) {
+        toast.error("Please upload a featured image");
+        return;
       }
       
-      // Create a slug if it doesn't exist
+      setSaving(true);
+      
+      let finalImageUrl = data.imageUrl;
+      if (imageFile && !previewImage.startsWith('data:')) {
+        finalImageUrl = await uploadImage();
+      } else if (previewImage.startsWith('data:')) {
+        finalImageUrl = previewImage;
+      }
+      
       let finalSlug = data.slug;
       if (!finalSlug) {
         finalSlug = data.title.toLowerCase()
@@ -498,12 +485,12 @@ const EditArticle = () => {
         metaTags: data.metaTags || '',
         content: data.content,
         imageUrl: finalImageUrl,
+        tags: data.tags || [],
         faqs: data.faqs || [],
         status: articleStatus,
         updatedAt: serverTimestamp()
       });
       
-      // Show success toast based on article status
       if (articleStatus === 'published') {
         toast.success('Article published successfully!', {
           duration: 4000,
@@ -517,13 +504,13 @@ const EditArticle = () => {
       }
       
       setSaving(false);
+      setFormDirty(false);
       
-      // Navigate based on status after a short delay to ensure toast is visible
       setTimeout(() => {
         if (articleStatus === 'published') {
-          navigate(`/articles/${finalSlug}`);
+          navigate(`/articles/${finalSlug}`, { state: { fromEdit: true } });
         } else {
-          navigate('/your-content', { state: { activeTab: 'drafts' } });
+          navigate('/your-content', { state: { activeTab: 'drafts', fromEdit: true } });
         }
       }, 1000);
       
@@ -614,7 +601,6 @@ const EditArticle = () => {
       <Navbar />
       <Toaster position="top-right" />
       
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {showDeleteConfirm && (
           <motion.div 
@@ -675,7 +661,6 @@ const EditArticle = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Preview header */}
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900">Article Preview</h1>
               <div className="flex space-x-3">
@@ -691,9 +676,7 @@ const EditArticle = () => {
               </div>
             </div>
             
-            {/* Article Preview Content */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Featured Image */}
               {previewImage && (
                 <div className="w-full h-[400px]">
                   <img 
@@ -704,9 +687,7 @@ const EditArticle = () => {
                 </div>
               )}
               
-              {/* Article Content */}
               <div className="p-8">
-                {/* Title and Meta */}
                 <div className="mb-8">
                   <h1 className="text-3xl font-bold text-gray-900 mb-3">{watch('title')}</h1>
                   {watch('subtitle') && (
@@ -718,7 +699,6 @@ const EditArticle = () => {
                     <span>{watch('date')}</span>
                   </div>
                   
-                  {/* Tags if available */}
                   {watch('metaTags') && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {watch('metaTags').split(',').map((tag, index) => (
@@ -733,12 +713,10 @@ const EditArticle = () => {
                   )}
                 </div>
                 
-                {/* Main Content */}
                 <div className="prose max-w-none">
                   <div dangerouslySetInnerHTML={{ __html: watch('content') || '<p>No content yet</p>' }}></div>
                 </div>
                 
-                {/* FAQs Section */}
                 {fields.length > 0 && fields[0].question && (
                   <div className="mt-8 border-t border-gray-100 pt-8">
                     <h3 className="text-xl font-semibold mb-6">Frequently Asked Questions</h3>
@@ -765,7 +743,6 @@ const EditArticle = () => {
       ) : (
         <main className="pt-32 pb-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Breadcrumb Navigation */}
             <nav className="flex mb-8" aria-label="Breadcrumb">
               <ol className="flex items-center space-x-2">
                 <li>
@@ -794,17 +771,14 @@ const EditArticle = () => {
               </ol>
             </nav>
 
-            {/* Header with simplified controls */}
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-2xl font-bold text-gray-900">Edit Article</h1>
               <div className="flex items-center space-x-6">
-                {/* Status Toggle */}
                 <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-1">
                   <button
                     type="button"
                     onClick={() => {
                       setArticleStatus('draft');
-                      handleSubmit(onSubmit)();
                     }}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       articleStatus === 'draft' 
@@ -818,7 +792,6 @@ const EditArticle = () => {
                     type="button"
                     onClick={() => {
                       setArticleStatus('published');
-                      handleSubmit(onSubmit)();
                     }}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                       articleStatus === 'published' 
@@ -830,7 +803,6 @@ const EditArticle = () => {
                   </button>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex items-center space-x-3">
                   <button
                     type="button"
@@ -854,12 +826,21 @@ const EditArticle = () => {
                     </svg>
                   </button>
                   <div className="h-6 w-px bg-gray-200"></div>
-                  <Link
-                    to="/your-content"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formDirty) {
+                        if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+                          navigate('/your-content');
+                        }
+                      } else {
+                        navigate('/your-content');
+                      }
+                    }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                   >
                     Cancel
-                  </Link>
+                  </button>
                   <button
                     type="button"
                     onClick={handleSubmit(onSubmit)}
@@ -887,7 +868,6 @@ const EditArticle = () => {
               </div>
             </div>
             
-            {/* Progress bar */}
             {(saving || isUploading) && (
               <div className="h-0.5 w-full bg-gray-100 rounded-full overflow-hidden mb-8">
                 <motion.div 
@@ -899,15 +879,12 @@ const EditArticle = () => {
               </div>
             )}
             
-            {/* Edit Form */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <form onSubmit={handleSubmit(onSubmit)}>
-                {/* Article Details */}
                 <div className="p-8 border-b border-gray-100">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">Article Details</h2>
                   
                   <div className="space-y-6">
-                    {/* Date and Author Fields - Read Only */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Publication Date</label>
@@ -924,7 +901,6 @@ const EditArticle = () => {
                       </div>
                     </div>
 
-                    {/* Title */}
                     <div>
                       <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                         Title <span className="text-red-500">*</span>
@@ -943,7 +919,6 @@ const EditArticle = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Subtitle Field */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                         <input
@@ -954,7 +929,6 @@ const EditArticle = () => {
                         />
                       </div>
                       
-                      {/* Meta Title Field */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Meta Title (SEO)
@@ -975,7 +949,6 @@ const EditArticle = () => {
                       </div>
                     </div>
                     
-                    {/* Slug with Domain */}
                     <div>
                       <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
                         Article URL <span className="text-red-500">*</span>
@@ -998,7 +971,6 @@ const EditArticle = () => {
                       {errors.slug && <p className="mt-1 text-sm text-red-600">{errors.slug.message}</p>}
                     </div>
                     
-                    {/* Meta Description */}
                     <div>
                       <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 mb-1">
                         Meta Description
@@ -1019,7 +991,6 @@ const EditArticle = () => {
                       {errors.metaDescription && <p className="mt-1 text-sm text-red-600">{errors.metaDescription.message}</p>}
                     </div>
 
-                    {/* Meta Tags Field */}
                     <div className="mt-4">
                       <label htmlFor="metaTags" className="block text-sm font-medium text-gray-700 mb-1">
                         Meta Tags
@@ -1037,80 +1008,97 @@ const EditArticle = () => {
                       </p>
                     </div>
                     
-                    {/* Featured Image - Required */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Featured Image <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="hidden"
-                        {...register("imageUrl", { required: "Featured image is required" })}
-                      />
-                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                        <div className="space-y-2 text-center">
-                          {previewImage ? (
-                            <div className="relative">
-                              <img 
-                                src={previewImage} 
-                                alt="Preview" 
-                                className="mx-auto h-64 w-auto object-cover rounded"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPreviewImage('');
-                                  setImageFile(null);
-                                  setValue('imageUrl', '');
-                                }}
-                                className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <input
+                          type="text"
+                          {...register("imageUrl", {required: "Featured image is required"})}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="https://example.com/image.jpg"
+                          onChange={(e) => {
+                            const url = e.target.value;
+                            setValue('imageUrl', url);
+                            if (!url) {
+                              setPreviewImage('');
+                            } else {
+                              setPreviewImage(url);
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={triggerFileInput}
+                          className={`px-4 py-2 rounded-md text-sm font-medium border ${isUploading ? 'bg-gray-100 text-gray-500' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <div className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Uploading...
                             </div>
                           ) : (
-                            <>
-                              <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                              <div className="flex justify-center text-sm text-gray-600">
-                                <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
-                                  <span>Upload an image</span>
-                                  <input 
-                                    id="file-upload" 
-                                    name="file-upload" 
-                                    type="file" 
-                                    className="sr-only"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    onChange={handleImageChange}
-                                  />
-                                </label>
-                              </div>
-                              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                            </>
+                              "Browse"
                           )}
-                          
-                          {isUploading && (
-                            <div className="mt-2">
-                              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-blue-500 rounded-full" 
-                                  style={{ width: `${uploadProgress}%` }}
-                                ></div>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-1">Uploading: {Math.round(uploadProgress)}%</p>
-                            </div>
-                          )}
-                        </div>
+                        </button>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
                       </div>
+                      <p className="text-xs text-gray-500 mb-2">Upload a high-quality image (JPG, PNG, WebP) for best results. Recommended size: 1200×630px.</p>
+                      
+                      {previewImage && (
+                        <div className="mt-2 relative w-full h-48 bg-gray-50 rounded-md overflow-hidden border border-gray-200">
+                          <img 
+                            src={previewImage} 
+                            alt="Preview" 
+                            className="w-full h-full object-contain" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://via.placeholder.com/640x360?text=Image+Not+Found';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewImage('');
+                              setImageFile(null);
+                              setValue('imageUrl', '');
+                            }}
+                            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      
+                      {isUploading && (
+                        <div className="mt-2">
+                          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-blue-500 rounded-full" 
+                              style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Uploading: {Math.round(uploadProgress)}%</p>
+                        </div>
+                      )}
                       {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl.message}</p>}
                     </div>
                   </div>
                 </div>
                 
-                {/* Article Content Section */}
                 <div className="p-8 border-t border-gray-100">
                   <h2 className="text-xl font-semibold text-gray-900 mb-6">Article Content</h2>
                   
@@ -1134,7 +1122,6 @@ const EditArticle = () => {
                     {errors.content && <p className="mt-2 text-sm text-red-600">{errors.content.message}</p>}
                   </div>
 
-                  {/* FAQ Section */}
                   <div className="space-y-6 pt-8 border-t border-gray-100">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-medium text-gray-900">FAQs (Optional)</h3>

@@ -99,11 +99,15 @@ const Login = ({ initialMode = "login" }) => {
     try {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
+        // Set initial session timestamp for 14-day timeout
+        localStorage.setItem('auth_last_active_timestamp', Date.now().toString());
         toast.dismiss(loadingToast);
         showCustomToast('Welcome back!');
       } else {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        // Set initial session timestamp for 14-day timeout
+        localStorage.setItem('auth_last_active_timestamp', Date.now().toString());
         toast.dismiss(loadingToast);
         await createUserDocument(user);
       }
@@ -136,6 +140,9 @@ const Login = ({ initialMode = "login" }) => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      
+      // Set initial session timestamp for 14-day timeout
+      localStorage.setItem('auth_last_active_timestamp', Date.now().toString());
       
       await createUserDocument(user);
       toast.dismiss(loadingToast);

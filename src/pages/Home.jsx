@@ -27,7 +27,7 @@ const Home = () => {
       <MarqueeTicker position="top" />
       
       {/* Navbar (logo + search + login) - Sticky, positioned below the top ticker */}
-      <Navbar />
+      <Navbar position="below-ticker" />
       
       {/* Content wrapper with proper spacing for fixed elements */}
       <div className="pt-28">

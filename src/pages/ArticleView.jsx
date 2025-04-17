@@ -6,6 +6,7 @@ import Navbar, { NavLinks } from '../components/Navbar';
 import MarqueeTicker from '../components/MarqueeTicker';
 import Footer from '../components/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { throttle } from 'lodash';
 
 const ArticleView = () => {
   const { slug } = useParams();
@@ -22,6 +23,24 @@ const ArticleView = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const articleRef = useRef(null);
   const shareRef = useRef(null);
+  const [tocVisible, setTocVisible] = useState(true);
+  const [tocTransform, setTocTransform] = useState("translateY(0)");
+  const [tocStyles, setTocStyles] = useState({
+    position: "fixed",
+    top: "160px",
+    right: "24px",
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+    opacity: 1,
+    transform: "translateY(0)",
+    transition: 'opacity 1s ease, transform 1s ease',
+    maxHeight: 'calc(100vh - 300px)',
+    overflowY: 'auto',
+    width: '16rem',
+    zIndex: 20
+  });
+  const footerRef = useRef(null);
+  const lastScrollY = useRef(0);
+  const tocOffsetRef = useRef(0);
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -77,7 +96,8 @@ const ArticleView = () => {
     if (article && articleRef.current) {
       // Find all headings in the article content
       setTimeout(() => {
-        const headingElements = articleRef.current.querySelectorAll('h2, h3, h4');
+        // Include FAQ headings and common FAQ selector patterns
+        const headingElements = articleRef.current.querySelectorAll('h2, h3, h4, h5, h6, .faq-question, .faq-heading, [data-faq-question]');
         const extractedHeadings = Array.from(headingElements).map((heading, index) => {
           // Add IDs to headings if they don't have one
           if (!heading.id) {
@@ -86,12 +106,32 @@ const ArticleView = () => {
           return {
             id: heading.id,
             text: heading.textContent,
-            level: parseInt(heading.tagName.charAt(1)),
+            level: heading.tagName ? parseInt(heading.tagName.charAt(1)) || 3 : 3,
             offsetTop: heading.offsetTop
           };
         });
         setHeadings(extractedHeadings);
-      }, 500);
+        
+        // Add specific styling for FAQ elements if they exist
+        const faqElements = articleRef.current.querySelectorAll('.faq-container, .faq-section, [data-faq-container]');
+        if (faqElements.length > 0) {
+          faqElements.forEach(faq => {
+            faq.classList.add('my-8', 'border', 'border-gray-100', 'rounded-xl', 'shadow-sm', 'overflow-hidden');
+          });
+          
+          // Style FAQ questions
+          const faqQuestions = articleRef.current.querySelectorAll('.faq-question, [data-faq-question]');
+          faqQuestions.forEach(question => {
+            question.classList.add('px-6', 'py-4', 'bg-gradient-to-r', 'from-gray-50', 'to-white', 'flex', 'items-center', 'justify-between', 'cursor-pointer');
+          });
+          
+          // Style FAQ answers
+          const faqAnswers = articleRef.current.querySelectorAll('.faq-answer, [data-faq-answer]');
+          faqAnswers.forEach(answer => {
+            answer.classList.add('px-6', 'py-4', 'bg-white');
+          });
+        }
+      }, 1000); // Increased timeout for better rendering
     }
   }, [article, loading]);
 
@@ -203,6 +243,59 @@ const ArticleView = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Completely redesigned scroll effect for smoother animations
+  useEffect(() => {
+    const handleTocVisibility = throttle(() => {
+      if (!footerRef.current) return;
+      
+      const footerTop = footerRef.current.getBoundingClientRect().top;
+      const windowHeight = window.innerHeight;
+      const scrollDirection = window.scrollY > lastScrollY.current ? 'down' : 'up';
+      lastScrollY.current = window.scrollY;
+      
+      // Start fade out much earlier for smoother transition
+      const fadeStartDistance = 250; // Start fading 250px before reaching footer
+      
+      if (footerTop < windowHeight + fadeStartDistance) {
+        // Calculate fade progress - from 1 to 0 as we approach footer
+        const fadeDistance = fadeStartDistance;
+        const distanceToFooter = footerTop - windowHeight;
+        const fadeProgress = Math.max(0, distanceToFooter / fadeDistance);
+        
+        // Smoothly transition opacity and vertical position
+        setTocStyles(prev => ({
+          ...prev,
+          opacity: Math.max(0.1, fadeProgress),
+          transform: `translateY(${(1 - fadeProgress) * -30}px)`, // Move up as we fade out
+          transition: 'opacity 0.8s ease, transform 0.8s ease',
+          pointerEvents: fadeProgress < 0.5 ? 'none' : 'auto' // Disable interactions when mostly faded
+        }));
+        
+        setTocVisible(fadeProgress > 0.1);
+      } else {
+        // Fully visible when far from footer
+        setTocStyles(prev => ({
+          ...prev,
+          opacity: 1,
+          transform: 'translateY(0)',
+          transition: 'opacity 0.5s ease, transform 0.5s ease',
+          pointerEvents: 'auto'
+        }));
+        
+        setTocVisible(true);
+      }
+    }, 50);
+    
+    window.addEventListener('scroll', handleTocVisibility);
+    
+    // Initial check
+    handleTocVisibility();
+    
+    return () => {
+      window.removeEventListener('scroll', handleTocVisibility);
     };
   }, []);
 
@@ -523,7 +616,25 @@ const ArticleView = () => {
                 animate={{ scaleX: 1 }}
                 transition={{ duration: 1, delay: 0.6 }}
               />
-              <div dangerouslySetInnerHTML={{ __html: article?.content || article?.description || '<p>No content available</p>' }} />
+              <div 
+                dangerouslySetInnerHTML={{ __html: article?.content || article?.description || '<p>No content available</p>' }}
+                className="prose prose-blue max-w-none"
+              />
+              
+              {/* Render FAQs section if available */}
+              {article?.faqs && article.faqs.length > 0 && (
+                <div className="mt-10 pt-8 border-t border-gray-100">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+                  <div className="space-y-4 faq-container">
+                    {article.faqs.map((faq, index) => (
+                      <details key={index} className="faq-item">
+                        <summary className="faq-question">{faq.question}</summary>
+                        <div className="faq-answer">{faq.answer}</div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               {/* Decorative elements */}
               <div className="absolute -right-12 top-8 w-28 h-28 rounded-full bg-gradient-to-r from-blue-400/10 to-indigo-500/10 blur-3xl pointer-events-none" />
@@ -617,43 +728,59 @@ const ArticleView = () => {
             </motion.div>
           </div>
           
-          {/* Table of contents - On desktop, floating */}
-          {headings.length > 0 && (
+          {/* Table of contents - On desktop, floating with improved animation */}
+          {headings.length > 0 && tocVisible && (
             <div className="hidden lg:block">
-              <motion.div 
-                className="fixed top-32 left-[calc(50%+400px)] w-64 max-h-[calc(100vh-200px)] overflow-y-auto"
+              <motion.div
+                style={tocStyles}
                 initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
+                animate={{ 
+                  opacity: tocStyles.opacity, 
+                  x: 0,
+                  transition: { 
+                    duration: 0.7, 
+                    ease: [0.16, 1, 0.3, 1]
+                  }
+                }}
               >
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                    Table of Contents
-                  </h3>
-                  <nav className="space-y-1">
-                    {headings.map((heading, index) => (
-                      <motion.button
-                        key={heading.id}
-                        onClick={() => scrollToHeading(heading.id)}
-                        className={`block w-full text-left px-3 py-1.5 rounded-lg transition-all duration-200 text-xs ${
-                          activeHeading === heading.id
-                            ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                        style={{ 
-                          paddingLeft: `${heading.level * 0.5 + 0.5}rem`,
-                        }}
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.9 + (0.05 * index) }}
-                        whileHover={{ x: 3 }}
-                      >
-                        {heading.text}
-                      </motion.button>
-                    ))}
+                <div className="bg-white/95 backdrop-blur-sm rounded-xl overflow-hidden">
+                  {/* Header with animated indicator */}
+                  <div className="bg-gradient-to-r from-gray-50 to-white px-4 py-3 border-b border-gray-100 relative">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                        <h3 className="text-sm font-medium text-gray-800">Contents</h3>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Links */}
+                  <nav className="p-2">
+                    <div className="space-y-0.5">
+                      {headings.map((heading, index) => (
+                        <motion.button
+                          key={heading.id}
+                          onClick={() => scrollToHeading(heading.id)}
+                          className={`block w-full text-left px-3 py-1.5 rounded-lg transition-all duration-200 text-xs ${
+                            activeHeading === heading.id
+                              ? 'bg-blue-50 text-blue-700 font-medium'
+                              : 'text-gray-600 hover:bg-gray-50'
+                          }`}
+                          style={{ 
+                            paddingLeft: `${heading.level * 0.5 + 0.5}rem`,
+                            borderLeft: activeHeading === heading.id ? '2px solid #3b82f6' : '2px solid transparent',
+                          }}
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 + (0.05 * index) }}
+                          whileHover={{ x: 3 }}
+                        >
+                          {heading.text}
+                        </motion.button>
+                      ))}
+                    </div>
                   </nav>
                 </div>
               </motion.div>
@@ -662,8 +789,10 @@ const ArticleView = () => {
         </main>
         
         {/* Bottom ticker */}
-        <MarqueeTicker position="bottom" />
-        <Footer />
+        <div ref={footerRef}>
+          <MarqueeTicker position="bottom" />
+          <Footer />
+        </div>
       </div>
       
       {/* Reading progress bar */}
@@ -675,7 +804,7 @@ const ArticleView = () => {
       
       {/* Back to top button - smaller and more minimal */}
       <motion.button
-        className="fixed bottom-6 right-6 p-2 rounded-full bg-white text-blue-600 shadow-md z-40 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100"
+        className="fixed bottom-6 right-6 p-2.5 rounded-full bg-white text-blue-600 shadow-md hover:shadow-lg z-40 hover:bg-blue-600 hover:text-white transition-all duration-300 border border-blue-100"
         initial={{ opacity: 0, y: 20 }}
         animate={{ 
           opacity: scrollProgress > 0.2 ? 1 : 0,
@@ -684,11 +813,52 @@ const ArticleView = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Back to top"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11l7-7 7 7M5 19l7-7 7 7" />
         </svg>
       </motion.button>
+      
+      {/* Add CSS for FAQ styling in the head */}
+      <style jsx global>{`
+        .article-content .faq-item,
+        .article-content details {
+          margin-bottom: 1rem;
+          border: 1px solid #f1f5f9;
+          border-radius: 0.75rem;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .article-content .faq-question,
+        .article-content summary {
+          padding: 1rem 1.5rem;
+          background: linear-gradient(to right, #f8fafc, #ffffff);
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .article-content .faq-question::after,
+        .article-content summary::after {
+          content: '+';
+          font-size: 1.25rem;
+          font-weight: 300;
+        }
+        
+        .article-content details[open] summary::after {
+          content: '−';
+        }
+        
+        .article-content .faq-answer,
+        .article-content details > div {
+          padding: 1rem 1.5rem;
+          background: white;
+        }
+      `}</style>
     </div>
   );
 };
